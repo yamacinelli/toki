@@ -1,0 +1,190 @@
+@startuml business_arch
+
+skinparam classAttributeIconSize 0
+
+' ===== LUT =====
+entity "Look Up Table" as LUT {
+  - id: Long
+  - name: String
+  - type: String
+  --
+  + getters(): any
+}
+
+' ===== Work Details =====
+class WorkDetails {
+  - work_model: LUT
+  - employment_type: LUT
+  - job_title: LUT
+  - schedule: JSON
+  - branch: Branch
+}
+
+' ===== Company =====
+entity Company {
+  - id: Long
+  - name: String
+  --
+  + getters(): any
+  + setters(): void
+  + save(request: CompanySaveRequest)
+}
+
+' ===== Branch =====
+entity Branch {
+  - id: Long
+  - name: String
+  - is_active: Boolean = true
+  - company: Company
+  --
+  + getters(): any
+  + setters(): void
+  + save(request: BranchSaveRequest)
+  + inactivate(id: Long): void
+  + activate(id: Long): void
+  + listAllByFilter(): Branch[]
+}
+
+' ===== User Details =====
+entity UserDetails {
+  - id: Long
+  - name: String
+  - last_name: String
+  - individual_identification_number: Long
+  - user_group: LUT
+  - company: Company
+  - user: User
+  --
+  + getters(): any
+  + setters(): void
+  + save(request: UserDetailsSaveRequest)
+  + listAllByFilter(filter: any): Profile []
+}
+
+' ===== User =====
+entity User {
+  - id: Long
+  - email: String
+  - password: String
+  - is_superuser: Boolean = false
+  - is_first_access: Boolean = true
+  - is_active: Boolean = true
+  --
+  + getters(): any
+  + setters(): void
+  + save(request: UserSaveRequest)
+  + changePassword(id: Long, password: String): void
+  + inactivate(id: Long): void
+  + activate(id: Long): void
+}
+
+' ===== Work Log =====
+entity WorkLog {
+  - id: Long
+  - geolocation: Point (Spatial)
+  - time: Time
+  - status: String = "OK"
+  - work_log_daily: WorkLogDaily
+  --
+  + getters(): any
+  + setters(): void
+  + save(request: WorkLogSaveRequest)
+  + adjustmentTime(id: Long, time: Time)
+}
+
+' ===== Work Log Daily =====
+entity WorkLogDaily {
+  - id: Long
+  - date: Date
+  - total_logs: Integer
+  - total_adjustment: Integer
+  - total_worked: Double
+  - time_bank: Double
+  - user: User
+  --
+  + getters(): any
+  + setters(): void
+  + save(request: WorkLogDailySaveRequest)
+  + listAllByFilter(filter: any): WorkLogDaily []
+  - calculateTotalLogs(): Integer
+  - calculateTotalAdjusment(): Integer
+  - calculateTotalWorked(): Double
+  - calculateTimeBank(): Double
+}
+
+' ===== Work Log Adjustment =====
+entity WorkLogAdjustment {
+  - id: Long
+  - time_adjust: Time
+  - requested_at: Date
+  - status: String = "PENDENT"
+  - rejection_reason: String
+  - work_log: WorkLog
+  - user_adjustment: User
+  --
+  + getters(): any
+  + setters(): void
+  + save(request: WorkLogAdjustmentSaveRequest)
+  + listAllByFilter(filter: any): WorkLogAdjustment []
+}
+
+' ===== Notification =====
+entity Notification {
+  - id: Long
+  - text: String
+  - status: String = "UNREAD"
+  - user: User
+  --
+  + getters(): any
+  + setters(): void
+  + save(request: NotificationSaveRequest)
+  + listAllByFilter(filter: any): Notification []
+  + markAsRead(id: Long)
+  + markAsUnread(id: Long)
+}
+
+' ===== Email Service =====
+class Email {
+  + send(): void
+}
+
+' ===== Report Service =====
+class Report <<service>> {
+  + generateTimeSheet(): PDF
+  + generateTimeBank(): PDF
+}
+
+' ===== Relationships =====
+
+' LookUpTable LUT
+LUT "1" o-- "1" WorkDetails
+LUT "1" o-- "1" WorkDetails
+LUT "1" o-- "1" WorkDetails
+LUT "1" o-- "1" UserDetails
+
+' Company
+Company "1" *-- "many" Branch
+
+' UserDetails
+UserDetails "1" *-- "1" User
+UserDetails "1" --> "many" Company
+
+' User dependencies (dashed)
+User ..> Email
+User ..> Report
+
+' Notification
+Notification "many" --> "1" User
+
+' WorkDetails
+WorkDetails "1" o-- "1" Branch
+
+' WorkLogDaily
+WorkLogDaily "1" *-- "many" WorkLog
+WorkLog "1" <-- "many" WorkLogAdjustment
+WorkLogDaily --> User
+
+' WorkLogAdjustment
+WorkLogAdjustment "many" --> "1" User
+
+@enduml
