@@ -1,4 +1,4 @@
-@startuml business_arch
+@startuml business
 
 skinparam classAttributeIconSize 0
 
@@ -168,6 +168,7 @@ Company "1" *-- "many" Branch
 ' UserDetails
 UserDetails "1" *-- "1" User
 UserDetails "1" --> "many" Company
+UserDetails --|> WorkDetails
 
 ' User dependencies (dashed)
 User ..> Email
