@@ -1,5 +1,4 @@
-@startuml business
-
+@startuml
 skinparam classAttributeIconSize 0
 
 ' ===== LUT =====
@@ -7,8 +6,6 @@ entity "Look Up Table" as LUT {
   - id: Long
   - name: String
   - type: String
-  --
-  + getters(): any
 }
 
 ' ===== Work Details =====
@@ -24,10 +21,6 @@ class WorkDetails {
 entity Company {
   - id: Long
   - name: String
-  --
-  + getters(): any
-  + setters(): void
-  + save(request: CompanySaveRequest)
 }
 
 ' ===== Branch =====
@@ -36,13 +29,6 @@ entity Branch {
   - name: String
   - is_active: Boolean = true
   - company: Company
-  --
-  + getters(): any
-  + setters(): void
-  + save(request: BranchSaveRequest)
-  + inactivate(id: Long): void
-  + activate(id: Long): void
-  + listAllByFilter(): Branch[]
 }
 
 ' ===== User Details =====
@@ -54,11 +40,6 @@ entity UserDetails {
   - user_group: LUT
   - company: Company
   - user: User
-  --
-  + getters(): any
-  + setters(): void
-  + save(request: UserDetailsSaveRequest)
-  + listAllByFilter(filter: any): Profile []
 }
 
 ' ===== User =====
@@ -69,27 +50,15 @@ entity User {
   - is_superuser: Boolean = false
   - is_first_access: Boolean = true
   - is_active: Boolean = true
-  --
-  + getters(): any
-  + setters(): void
-  + save(request: UserSaveRequest)
-  + changePassword(id: Long, password: String): void
-  + inactivate(id: Long): void
-  + activate(id: Long): void
 }
 
 ' ===== Work Log =====
 entity WorkLog {
   - id: Long
-  - geolocation: Point (Spatial)
   - time: Time
+  - geolocation: Point
   - status: String = "OK"
   - work_log_daily: WorkLogDaily
-  --
-  + getters(): any
-  + setters(): void
-  + save(request: WorkLogSaveRequest)
-  + adjustmentTime(id: Long, time: Time)
 }
 
 ' ===== Work Log Daily =====
@@ -101,15 +70,6 @@ entity WorkLogDaily {
   - total_worked: Double
   - time_bank: Double
   - user: User
-  --
-  + getters(): any
-  + setters(): void
-  + save(request: WorkLogDailySaveRequest)
-  + listAllByFilter(filter: any): WorkLogDaily []
-  - calculateTotalLogs(): Integer
-  - calculateTotalAdjusment(): Integer
-  - calculateTotalWorked(): Double
-  - calculateTimeBank(): Double
 }
 
 ' ===== Work Log Adjustment =====
@@ -121,11 +81,6 @@ entity WorkLogAdjustment {
   - rejection_reason: String
   - work_log: WorkLog
   - user_adjustment: User
-  --
-  + getters(): any
-  + setters(): void
-  + save(request: WorkLogAdjustmentSaveRequest)
-  + listAllByFilter(filter: any): WorkLogAdjustment []
 }
 
 ' ===== Notification =====
@@ -134,13 +89,6 @@ entity Notification {
   - text: String
   - status: String = "UNREAD"
   - user: User
-  --
-  + getters(): any
-  + setters(): void
-  + save(request: NotificationSaveRequest)
-  + listAllByFilter(filter: any): Notification []
-  + markAsRead(id: Long)
-  + markAsUnread(id: Long)
 }
 
 ' ===== Email Service =====
@@ -166,9 +114,8 @@ LUT "1" o-- "1" UserDetails
 Company "1" *-- "many" Branch
 
 ' UserDetails
-UserDetails "1" *-- "1" User
+UserDetails "1" --* "1" User
 UserDetails "1" --> "many" Company
-UserDetails --|> WorkDetails
 
 ' User dependencies (dashed)
 User ..> Email
@@ -178,14 +125,13 @@ User ..> Report
 Notification "many" --> "1" User
 
 ' WorkDetails
-WorkDetails "1" o-- "1" Branch
+WorkDetails "1" --o "1" Branch
 
 ' WorkLogDaily
 WorkLogDaily "1" *-- "many" WorkLog
 WorkLog "1" <-- "many" WorkLogAdjustment
-WorkLogDaily --> User
+WorkLogDaily "many" --o "1" User
 
 ' WorkLogAdjustment
-WorkLogAdjustment "many" --> "1" User
-
+WorkLogAdjustment "many" --* "1" User
 @enduml
